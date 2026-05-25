@@ -1,0 +1,58 @@
+simulation:
+  time_zone: "Asia/Kolkata"
+  
+  # Cellular Operator Share (MNO)
+  mno_distribution:
+    Jio: 0.42
+    Airtel: 0.36
+    Vodafone_Idea: 0.16
+    BSNL: 0.06
+
+  # Broadband ISP Share for stationary IPDR logs
+  isp_distribution:
+    ACT_Fibernet: 0.40
+    Hathway: 0.35
+    Tata_Play_Fiber: 0.25
+
+  # Geographic boundary presets for BTS tower grids
+  geo_regions:
+    Mumbai:
+      lat_min: 18.90
+      lat_max: 19.30
+      lon_min: 72.75
+      lon_max: 73.10
+    Delhi_NCR:
+      lat_min: 28.40
+      lat_max: 28.85
+      lon_min: 76.90
+      lon_max: 77.35
+    Bengaluru:
+      lat_min: 12.85
+      lat_max: 13.10
+      lon_min: 77.50
+      lon_max: 77.75
+
+# Real-world public CIDR blocks for major Indian telecommunication entities
+# Allows SignalForge to assign realistic, verified ISP-owned IP subnets
+public_ip_pools:
+  Jio:
+    - "49.32.0.0/12"      # Reliance Jio Infocomm
+    - "157.44.0.0/13"
+  Airtel:
+    - "106.192.0.0/12"    # Bharti Airtel
+    - "223.176.0.0/13"
+  Vodafone_Idea:
+    - "150.129.0.0/16"    # Vodafone Idea Limited
+    - "27.56.0.0/14"
+  BSNL:
+    - "117.192.0.0/13"    # BSNL Broadband/Cellular
+    - "210.212.0.0/16"
+  ACT_Fibernet:
+    - "49.204.0.0/14"     # Atria Convergence Technologies
+    - "103.241.0.0/22"
+  Hathway:
+    - "115.110.0.0/16"    # Hathway IP Cable Internet
+    - "122.160.0.0/16"
+  Tata_Play_Fiber:
+    - "103.142.20.0/22"   # Tata Play Broadband
+    - "103.85.204.0/22"

@@ -1,0 +1,4 @@
+faker>=19.0.0
+pyyaml>=6.0
+pandas>=2.0.0
+confluent-kafka>=2.0.0
