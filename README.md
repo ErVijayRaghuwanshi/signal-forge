@@ -131,8 +131,11 @@ signal_forge/
 Ensure you have Python 3.8+ installed.
 
 ```bash
+# Clone the repository
+git clone https://github.com/ErVijayRaghuwanshi/signal-forge.git
+
 # Clone the repository and navigate inside
-cd brave-curie
+cd signal-forge
 
 # Install the required dependencies using uv (or standard pip)
 uv pip install -r requirements.txt
