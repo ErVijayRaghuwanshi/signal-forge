@@ -1,5 +1,5 @@
 [project]
-name = "https://github.com/ErVijayRaghuwanshi/signal-forge.git"
+name = "signal-forge"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -9,4 +9,11 @@ dependencies = [
     "faker>=19.0.0",
     "pandas>=2.0.0",
     "pyyaml>=6.0",
+    "fastavro>=1.8.0",
+    "certifi>=2023.7.22",
+    "requests>=2.31.0",
+    "httpx>=0.24.0",
+    "authlib>=1.2.0",
+    "cachetools>=5.0.0",
+    "attrs>=22.0.0",
 ]

@@ -247,7 +247,33 @@ docker run -v "$(pwd)/output:/app/output" signal-forge --users 100 --records 200
 | `--kafka-bootstrap`| `str` | `"localhost:9092"`| Bootstrap broker host string for Kafka streams. |
 | `--kafka-cdr-topic`| `str` | `"cdr-records"` | Kafka topic designated for voice and SMS CDR events. |
 | `--kafka-ipdr-topic`| `str` | `"ipdr-records"`| Kafka topic designated for internet/CGNAT IPDR events. |
+| `--kafka-schema-registry`| `str` | *None* | Schema Registry endpoint. Defaults to `KAFKA_SCHEMA_REGISTRY_URL` env var. |
 | `--output-dir` | `str` | `"./output"` | Local folder where CSV/JSON log dumps are exported. |
 | `--days` | `int` | `1` | Backfill history range in days (Batch Mode). |
 | `--region` | `str` | `"Mumbai"` | Cities coordinates grid presets: `Mumbai`, `Delhi_NCR`, `Bengaluru`. |
 | `--config` | `str` | `"config.yaml"`| Path to simulation weight settings configuration yaml. |
+
+---
+
+## 🔄 Modifying Schemas & Adding New Fields
+
+If you want to add a new field (e.g., `5G_BAND` to CDR records or `SESSION_ID` to IPDR records), you must make modifications in two places:
+
+### Step 1: Update the Event Generator Logic
+Modify the generator files to construct and simulate the new field:
+- **CDR Records**: Update the dictionary returned by `_simulate_event` inside [cdr.py](file:///Users/ervijay/Documents/Programs/Repo/signal-forge/signal_forge/generators/cdr.py).
+- **IPDR Records**: Update the dictionary returned by `_simulate_data_session` inside [ipdr.py](file:///Users/ervijay/Documents/Programs/Repo/signal-forge/signal_forge/generators/ipdr.py).
+
+*Note: All generator dictionary keys are automatically converted to **UPPERCASE** upon export. You can use lowercase or uppercase keys in the generator as you prefer; they will be serialized as uppercase.*
+
+### Step 2: Update the Schema Registry Definitions
+Update the corresponding Avro schema dictionaries inside [kafka_exporter.py](file:///Users/ervijay/Documents/Programs/Repo/signal-forge/signal_forge/exporters/kafka_exporter.py):
+- **CDR Schema**: Add the field definition to `CDR_SCHEMA_DICT`.
+- **IPDR Schema**: Add the field definition to `IPDR_SCHEMA_DICT`.
+
+> [!IMPORTANT]
+> 1. **Uppercase Field Names**: Since the exporter converts all record keys to uppercase, the `"name"` property of your new field in the Avro schema **must be in UPPERCASE** (e.g., `{"name": "SESSION_ID", "type": "string"}`).
+> 2. **Schema Compatibility**: To maintain backward and forward compatibility (allowing older consumers to read new messages, and new consumers to read old cached messages), you should assign a **default value** or make the field **nullable/optional**.
+>    - *Example (Required with default)*: `{"name": "NEW_FIELD", "type": "string", "default": "N/A"}`
+>    - *Example (Nullable/Optional)*: `{"name": "NEW_FIELD", "type": ["null", "string"], "default": null}`
+

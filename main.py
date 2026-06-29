@@ -57,21 +57,43 @@ def parse_args():
         help="Simulation speed multiplier. e.g. 60.0 means 1 hour simulated in 1 minute of wall time (default: 60.0)"
     )
     parser.add_argument(
-        "--kafka-bootstrap", type=str, default="localhost:9092",
-        help="Bootstrap servers for Kafka Exporter (default: localhost:9092)"
+        "--kafka-bootstrap", type=str,
+        default=os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
+        help="Bootstrap servers for Kafka Exporter (default: KAFKA_BOOTSTRAP_SERVERS env var or localhost:9092)"
     )
     parser.add_argument(
-        "--kafka-cdr-topic", type=str, default="cdr-records",
-        help="Kafka topic for CDR events (default: cdr-records)"
+        "--kafka-schema-registry", type=str,
+        default=os.environ.get("KAFKA_SCHEMA_REGISTRY_URL"),
+        help="Schema Registry URL for Kafka Exporter (default: KAFKA_SCHEMA_REGISTRY_URL env var or None)"
     )
     parser.add_argument(
-        "--kafka-ipdr-topic", type=str, default="ipdr-records",
-        help="Kafka topic for IPDR events (default: ipdr-records)"
+        "--kafka-cdr-topic", type=str,
+        default=os.environ.get("KAFKA_CDR_TOPIC", "cdr-records"),
+        help="Kafka topic for CDR events (default: KAFKA_CDR_TOPIC env var or cdr-records)"
+    )
+    parser.add_argument(
+        "--kafka-ipdr-topic", type=str,
+        default=os.environ.get("KAFKA_IPDR_TOPIC", "ipdr-records"),
+        help="Kafka topic for IPDR events (default: KAFKA_IPDR_TOPIC env var or ipdr-records)"
     )
     return parser.parse_args()
 
 def main():
     args = parse_args()
+    
+    # Load configuration file for default values and overrides
+    import yaml
+    config_data = {}
+    if os.path.exists(args.config):
+        try:
+            with open(args.config, 'r') as f:
+                config_data = yaml.safe_load(f) or {}
+        except Exception as e:
+            print(f"[!] Warning: Failed to parse config file '{args.config}': {e}")
+            
+    schema_registry_url = args.kafka_schema_registry or config_data.get("kafka", {}).get("schema_registry_url")
+    if schema_registry_url and str(schema_registry_url).lower().strip() in ("none", "null", "false", ""):
+        schema_registry_url = None
     
     print("\n" + "="*60)
     print("📡 SIGNALFORGE SYNTHETIC LOG ENGINE INITIALIZATION")
@@ -87,12 +109,18 @@ def main():
         print(f"[-] Speed Scale : {args.speed}x (1 simulated minute = {60/args.speed:.2f} real seconds)")
         if args.format == "kafka":
             print(f"[-] Kafka Broker: {args.kafka_bootstrap}")
+            print(f"[-] Registry URL: {schema_registry_url if schema_registry_url else 'None (JSON format)'}")
             print(f"[-] CDR Topic   : {args.kafka_cdr_topic}")
             print(f"[-] IPDR Topic  : {args.kafka_ipdr_topic}")
     else:
         print(f"[-] Running Mode: BATCH BACKFILL")
         print(f"[-] Time Range  : {args.days} Days backfill")
         print(f"[-] Output Dir  : {args.output_dir}")
+        if args.format == "kafka":
+            print(f"[-] Kafka Broker: {args.kafka_bootstrap}")
+            print(f"[-] Registry URL: {schema_registry_url if schema_registry_url else 'None (JSON format)'}")
+            print(f"[-] CDR Topic   : {args.kafka_cdr_topic}")
+            print(f"[-] IPDR Topic  : {args.kafka_ipdr_topic}")
     print("="*60 + "\n")
     
     if not os.path.exists(args.config):
@@ -104,8 +132,8 @@ def main():
         if not KafkaExporter:
             print("[!] Error: 'confluent-kafka' package is required for kafka export but not installed.")
             sys.exit(1)
-        cdr_exporter = KafkaExporter(args.kafka_bootstrap)
-        ipdr_exporter = KafkaExporter(args.kafka_bootstrap)
+        cdr_exporter = KafkaExporter(args.kafka_bootstrap, schema_registry_url=schema_registry_url)
+        ipdr_exporter = KafkaExporter(args.kafka_bootstrap, schema_registry_url=schema_registry_url)
         cdr_target = args.kafka_cdr_topic
         ipdr_target = args.kafka_ipdr_topic
     elif args.format == "csv":

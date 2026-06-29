@@ -56,3 +56,8 @@ public_ip_pools:
   Tata_Play_Fiber:
     - "103.142.20.0/22"   # Tata Play Broadband
     - "103.85.204.0/22"
+
+# Kafka Settings
+kafka:
+  schema_registry_url: "http://localhost:8081"
+
